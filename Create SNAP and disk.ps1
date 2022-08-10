@@ -28,7 +28,7 @@ catch {
     }
 }
 
-# Variables where you tacke snapshot
+# Variables where you take snapshot
 $diskName = "Your Disk Name"
 $resourceGroupName = "RG Name"
 $snapshotName = "Name-$(get-date -Format 'yyyy-MM-dd-hh')"
