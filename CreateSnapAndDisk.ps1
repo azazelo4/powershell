@@ -6,7 +6,8 @@
 
 # Creating RunAs connection
 $connectionName = "AzureRunAsConnection"
-try {
+try
+{
     # Get the connection "AzureRunAsConnection "
     $servicePrincipalConnection = Get-AutomationConnection -Name $connectionName
     # "Logging in to Azure..."
@@ -28,25 +29,25 @@ catch {
     }
 }
 
-# Variables where you take snapshot
-$diskName = "Your Disk Name"
-$resourceGroupName = "RG Name"
-$snapshotName = "Name-$(get-date -Format 'yyyy-MM-dd-hh')"
-
-#targeted VM where need to attach disk
-$SubscriptionIDTar = 'SubsriptionID' 
-$resourceGroupNameTar = 'RG Name'
-$vmNameTar = 'VM name'
+# Variables
+$diskName = "xxx"
+$resourceGroupName = "zzz"
+$snapshotName = "xxx-$(get-date -Format 'yyyy-MM-dd-hh')"
 
 # Variables for creating Disk
 $SnapshotResourceGroup = $resourceGroupName
-$DiskNameOS = "$snapshotName-disk"
+$DiskNameOS = Get-AutomationVariable -Name "DiskNameClone"
 
-# 0) Get the disk that you need to backup by creating snapshot
-Select-AzSubscription -SubscriptionName "select name of subs"
+# Variables for targeted subs and vm
+$SubscriptionIDTar = 'aaa'
+$resourceGroupNameTar = 'bbb'
+$vmNameTar = 'ccc'
+
+# Get the disk that you need to backup by creating snapshot
+Select-AzSubscription -SubscriptionName "ddd"
 $yourDisk = Get-AzDisk -DiskName $DiskName -ResourceGroupName $resourceGroupName
 
-# 1) Create snapshot by setting the SourceUri property with the value of the Id property of the disk
+# Create snapshot by setting the SourceUri property with the value of the Id property of the disk
 $snapshotConfig = New-AzSnapshotConfig -SourceUri $yourDisk.Id -Location $yourDisk.Location -CreateOption Copy
 New-AzSnapshot -ResourceGroupName $resourceGroupName -SnapshotName $snapshotName -Snapshot $snapshotConfig
 
@@ -66,17 +67,31 @@ catch {
     }
 }
 
-# 2) Create Disk
+# Create Disk
 $snapshotinfo = Get-AzSnapshot -ResourceGroupName $SnapshotResourceGroup -SnapshotName $snapshotName
 New-AzDisk -DiskName $DiskNameOS (New-AzDiskConfig -Location CentralUS -CreateOption Copy -SourceResourceId $snapshotinfo.Id) -ResourceGroupName $SnapshotResourceGroup
 
-# 3) Move disk to another subscription (assign contributor role to RunAs account for both subsription)
+# Move disk to another subscription (assign contributor role to RunAs account for both subsription)
 $Move = Get-AzResource -ResourceGroupName $resourceGroupName -ResourceName $DiskNameOS
 Move-AzResource -DestinationSubscriptionId $SubscriptionIDTar -DestinationResourceGroupName $resourceGroupNameTar -ResourceId $Move.ResourceId -Force
 
-# 4) Attach Disk to targeted VM
+# Remove snapshot
+Remove-AzSnapshot -ResourceGroupName $resourceGroupName -SnapshotName $snapshotName -Force
+
+#Attach Disk to targeted VM
 Set-AzContext -Subscription $SubscriptionIDTar
 $vm = Get-AzVM -Name $vmNameTar -ResourceGroupName $resourceGroupNameTar
 $diskURI = Get-AzDisk -DiskName $DiskNameOS
 $vm = Add-AzVMDataDisk -CreateOption Attach -Lun 0 -VM $vm -ManagedDiskId $diskURI.id
 Update-AzVM -VM $vm -ResourceGroupName $resourceGroupNameTar
+
+# Create Schedule for second script that deattach and remove disk
+$automationAccountName = "automationAccountName"
+$runbookName = "ScanDeattachAndRemoveDIsk"
+$scheduleName = "test"
+$TimeZone = ([System.TimeZoneInfo]::Local).Id
+
+Select-AzSubscription -SubscriptionName "ddd"
+New-AzAutomationSchedule -AutomationAccountName $automationAccountName -Name $scheduleName -StartTime ((get-date).AddHours(8)) -OneTime -ResourceGroupName $resourceGroupName -TimeZone $TimeZone
+Register-AzAutomationScheduledRunbook -AutomationAccountName $automationAccountName -Name $runbookName -ScheduleName $scheduleName -ResourceGroupName $resourceGroupName
+
