@@ -12,21 +12,20 @@ param (
     [string] $vmSize = "Standard_B2s",
     [Parameter(Mandatory = $false)]
     [string] $userName = "admin",
-	[Parameter (Mandatory = $false)]
+    [Parameter (Mandatory = $false)]
     [string] $resourceGroupName = "enter RG name here",
-	[Parameter (Mandatory = $false)]
+    [Parameter (Mandatory = $false)]
     [string] $subscriptionName = "Microsoft Azure Enterprise",
-	[Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false)]
     [string] $VirtualNetwork = "Enter VN name here",
-	[Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false)]
     [string] $Subnet = "Enter subnet name",
-	[Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true)]
     [string] $privateIP  = "xxx.xxx.xxx.$NUM",
-	[Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false)]
     [string] $azRegion = "select region"
 )
 
-//max 3 char
 
 $connectionName = "AzureRunAsConnection"
 try
