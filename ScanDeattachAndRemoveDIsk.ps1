@@ -27,7 +27,7 @@ $VM = "XXX"
 $DiskName = Get-AutomationVariable -Name 'DiskNameClone'
 
 # Get the disk that you need to backup by creating snapshot
-Select-AzSubscription -SubscriptionName "Microsoft Azure Enterprise Travelzoo-Inc"
+Select-AzSubscription -SubscriptionName "YYY"
 
 # Deattach disk from VM
 $VirtualMachine = Get-AzVM -ResourceGroupName $RGName -Name $VM
